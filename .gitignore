@@ -43,5 +43,16 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Local SDKs, build tooling, and generated artifacts
 .tool/
 reverse/
+.gradle/
+.kotlin/
+.cxx/
+DerivedData/
+*.apk
+*.aab
+*.ipa
+*.dill
+/tool/hummer_run.sh

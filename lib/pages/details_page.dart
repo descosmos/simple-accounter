@@ -8,6 +8,7 @@ import '../utils.dart';
 import '../widgets/hairline.dart';
 import '../widgets/txn_row.dart';
 import 'book_switcher.dart';
+import 'record_page.dart';
 
 /// 明细:月份切换 + 收支概览 + 按日分组的全部账单(事件账本为全程记录)。
 class DetailsPage extends StatefulWidget {
@@ -152,16 +153,61 @@ class _DetailsPageState extends State<DetailsPage> {
         const Hairline(),
         // ---- 按日分组 ----
         if (groups.isEmpty)
-          const Padding(
-            padding: EdgeInsets.only(top: 90),
-            child: Center(
-              child: Column(
-                children: [
-                  Icon(CupertinoIcons.tray, size: 44, color: AppTheme.inkWeak),
-                  SizedBox(height: 12),
-                  Text('还没有账单', style: AppTheme.caption),
-                ],
-              ),
+          Padding(
+            padding: const EdgeInsets.only(top: 90),
+            child: Column(
+              children: [
+                const Icon(
+                  CupertinoIcons.tray,
+                  size: 44,
+                  color: AppTheme.inkWeak,
+                ),
+                const SizedBox(height: 12),
+                const Text('还没有账单', style: AppTheme.caption),
+                const SizedBox(height: 14),
+                CupertinoButton(
+                  padding: EdgeInsets.zero,
+                  pressedOpacity: 0.5,
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    Navigator.of(context, rootNavigator: true).push(
+                      CupertinoPageRoute<void>(
+                        fullscreenDialog: true,
+                        builder: (_) => const RecordPage(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 26,
+                      vertical: 11,
+                    ),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppTheme.ink, width: 1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '记一笔',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: AppTheme.ink,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Icon(
+                          CupertinoIcons.arrow_right,
+                          size: 14,
+                          color: AppTheme.accent,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           )
         else
@@ -172,8 +218,8 @@ class _DetailsPageState extends State<DetailsPage> {
 
   Widget _pagerArrow(IconData icon, VoidCallback onTap) {
     return CupertinoButton(
-      padding: const EdgeInsets.all(8),
-      minimumSize: const Size(32, 32),
+      padding: const EdgeInsets.all(12),
+      minimumSize: const Size(38, 38),
       pressedOpacity: 0.4,
       onPressed: onTap,
       child: Icon(icon, size: 18, color: AppTheme.inkSub),

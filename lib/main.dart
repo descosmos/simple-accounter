@@ -96,9 +96,9 @@ class _RootTabsState extends State<RootTabs> {
           Expanded(
             child: IndexedStack(
               index: _index,
-              children: const [
-                DashboardPage(),
-                DetailsPage(),
+              children: [
+                DashboardPage(onGoDetails: () => setState(() => _index = 1)),
+                const DetailsPage(),
                 SizedBox.shrink(), // 记一笔占位,永不显示
                 StatsPage(),
                 SettingsPage(),
@@ -174,10 +174,24 @@ class _RootTabsState extends State<RootTabs> {
             Stack(
               clipBehavior: Clip.none,
               children: [
-                const Icon(CupertinoIcons.plus, size: 24, color: AppTheme.ink),
+                // 描边方块 + 橙色小点,像设备上的机械拨片,保持可操作感
+                Container(
+                  width: 36,
+                  height: 26,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: AppTheme.ink, width: 1.2),
+                    borderRadius: BorderRadius.circular(7),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    CupertinoIcons.plus,
+                    size: 17,
+                    color: AppTheme.ink,
+                  ),
+                ),
                 Positioned(
                   right: -5,
-                  top: -2,
+                  top: -3,
                   child: Container(
                     width: 7,
                     height: 7,
@@ -189,10 +203,14 @@ class _RootTabsState extends State<RootTabs> {
                 ),
               ],
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 3),
             const Text(
               '记一笔',
-              style: TextStyle(fontSize: 10, color: AppTheme.inkSub),
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                color: AppTheme.ink,
+              ),
             ),
           ],
         ),

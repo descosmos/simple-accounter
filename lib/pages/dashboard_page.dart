@@ -9,6 +9,7 @@ import '../widgets/category_avatar.dart';
 import '../widgets/hairline.dart';
 import 'book_edit_page.dart';
 import 'book_switcher.dart';
+import 'record_page.dart';
 
 /// 首页:结余大数字 + 三列数据 + 最近记录 + 月度日历。
 /// 页面唯一视觉焦点是中央的点阵结余数字。
@@ -41,6 +42,16 @@ class _DashboardPageState extends State<DashboardPage> {
         context,
         rootNavigator: true,
       ).push(CupertinoPageRoute<void>(builder: (_) => const BookEditPage())),
+    );
+  }
+
+  void _openRecord() {
+    HapticFeedback.lightImpact();
+    Navigator.of(context, rootNavigator: true).push(
+      CupertinoPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (_) => const RecordPage(),
+      ),
     );
   }
 
@@ -181,10 +192,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
         ),
         if (shownTxns.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 18),
-            child: Center(child: Text('暂无记录', style: AppTheme.caption)),
-          )
+          _EmptyRecent(onRecord: _openRecord)
         else
           for (var i = 0; i < shownTxns.length; i++)
             _homeTxnRow(shownTxns[i], book, showDivider: i > 0),
@@ -239,7 +247,7 @@ class _DashboardPageState extends State<DashboardPage> {
       child: Row(
         children: [
           SizedBox(
-            width: 34,
+            width: 40,
             child: (txn.day.hour != 0 || txn.day.minute != 0)
                 ? Text(
                     '${txn.day.hour.toString().padLeft(2, '0')}:${txn.day.minute.toString().padLeft(2, '0')}',
@@ -354,8 +362,8 @@ class _MonthCalendar extends StatelessWidget {
 
   Widget _pagerArrow(IconData icon, VoidCallback onTap) {
     return CupertinoButton(
-      padding: const EdgeInsets.all(6),
-      minimumSize: const Size(28, 28),
+      padding: const EdgeInsets.all(10),
+      minimumSize: const Size(34, 34),
       pressedOpacity: 0.4,
       onPressed: onTap,
       child: Icon(icon, size: 15, color: AppTheme.inkSub),
@@ -414,6 +422,57 @@ class _MonthCalendar extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// 首页无记录时的引导:文字 + 明显的「记一笔」描边按钮(橙色箭头)。
+class _EmptyRecent extends StatelessWidget {
+  const _EmptyRecent({required this.onRecord});
+
+  final VoidCallback onRecord;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 18),
+      child: Column(
+        children: [
+          const Text('暂无记录', style: AppTheme.caption),
+          const SizedBox(height: 12),
+          CupertinoButton(
+            padding: EdgeInsets.zero,
+            pressedOpacity: 0.5,
+            onPressed: onRecord,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 11),
+              decoration: BoxDecoration(
+                border: Border.all(color: AppTheme.ink, width: 1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '记一笔',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.ink,
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Icon(
+                    CupertinoIcons.arrow_right,
+                    size: 14,
+                    color: AppTheme.accent,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

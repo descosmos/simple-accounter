@@ -165,8 +165,8 @@ class _StatsPageState extends State<StatsPage> {
 
   Widget _arrow(IconData icon, VoidCallback onTap) {
     return CupertinoButton(
-      padding: const EdgeInsets.all(8),
-      minimumSize: const Size(32, 32),
+      padding: const EdgeInsets.all(12),
+      minimumSize: const Size(38, 38),
       pressedOpacity: 0.4,
       onPressed: onTap,
       child: Icon(icon, size: 18, color: AppTheme.inkSub),
