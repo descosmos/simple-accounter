@@ -219,7 +219,7 @@ class _RecordPageState extends State<RecordPage> {
                         ),
                         // ---- 金额(唯一视觉焦点) ----
                         Padding(
-                          padding: const EdgeInsets.fromLTRB(20, 22, 20, 4),
+                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 2),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
@@ -231,7 +231,7 @@ class _RecordPageState extends State<RecordPage> {
                                   Text(
                                     ledgerStore.currentBook.currencySymbol,
                                     style: AppTheme.dots(
-                                      26,
+                                      22,
                                       color: AppTheme.inkSub,
                                     ),
                                   ),
@@ -242,7 +242,7 @@ class _RecordPageState extends State<RecordPage> {
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: AppTheme.dots(
-                                        58,
+                                        50,
                                         color: _expr.isEmpty
                                             ? AppTheme.inkWeak
                                             : AppTheme.ink,
@@ -252,7 +252,7 @@ class _RecordPageState extends State<RecordPage> {
                                 ],
                               ),
                               SizedBox(
-                                height: 20,
+                                height: 18,
                                 child: _hasOp && _result != null
                                     ? Text(
                                         '= ${_result!.toStringAsFixed(2)}',
@@ -287,7 +287,7 @@ class _RecordPageState extends State<RecordPage> {
                         ),
                         const SizedBox(height: 10),
                         // ---- 分类宫格(固定高度带,内部可滚) ----
-                        SizedBox(height: 216, child: _buildGrid()),
+                        SizedBox(height: 192, child: _buildGrid()),
                         // ---- 账本 / 日期 / 备注 ----
                         const Padding(
                           padding: EdgeInsets.symmetric(horizontal: 20),
@@ -367,7 +367,7 @@ class _RecordPageState extends State<RecordPage> {
                 if (MediaQuery.of(context).viewInsets.bottom == 0 &&
                     !_remarkFocus.hasFocus)
                   SizedBox(
-                    height: 252,
+                    height: 236,
                     child: CalcKeyboard(
                       dateLabel: isSameDay(_date, DateTime.now())
                           ? '今天'
@@ -403,7 +403,7 @@ class _RecordPageState extends State<RecordPage> {
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         child: Row(
           children: [
             Text(label, style: AppTheme.body),

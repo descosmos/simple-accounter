@@ -23,7 +23,13 @@ class SimpleLedgerApp extends StatefulWidget {
 }
 
 class _SimpleLedgerAppState extends State<SimpleLedgerApp> {
-  late final Future<void> _loading = ledgerStore.load();
+  late final Future<void> _loading = _init();
+
+  Future<void> _init() async {
+    await ledgerStore.load();
+    // 演示数据(虚构,仅注入一次)
+    await ledgerStore.seedDemoDataIfNeeded();
+  }
 
   @override
   Widget build(BuildContext context) {

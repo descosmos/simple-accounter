@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
@@ -28,6 +29,7 @@ class LedgerStore extends ChangeNotifier {
   final List<Txn> _txns = [];
   final List<Category> _customCategories = [];
   String _currentBookId = '';
+  bool _demoSeeded = false;
 
   int _idCounter = 0;
   String _genId(String prefix) =>
@@ -264,6 +266,7 @@ class LedgerStore extends ChangeNotifier {
             ),
           );
         _currentBookId = j['currentBookId'] as String? ?? '';
+        _demoSeeded = j['demoSeededV1'] as bool? ?? false;
       }
     } catch (_) {
       // 数据损坏时回退到初始状态
@@ -286,6 +289,143 @@ class LedgerStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 注入演示数据(虚构,仅一次)。
+  /// 此前重复注入的设备会先按"完全相同记录"去重,再跳过注入。
+  Future<void> seedDemoDataIfNeeded() async {
+    if (_demoSeeded) return;
+    // 1. 去重(修复重复注入产生的成对相同记录)
+    final seen = <String>{};
+    final before = _txns.length;
+    _txns.retainWhere((t) {
+      final k =
+          '${t.bookId}|${t.type.index}|${t.categoryKey}|${t.amountCents}|${t.date}|${t.remark}';
+      return seen.add(k);
+    });
+    final removedDup = _txns.length != before;
+    // 2. 没有重复注入过的设备 → 首次注入
+    if (!removedDup) {
+      const expensePool = [
+        'canyin',
+        'canyin',
+        'canyin',
+        'jiaotong',
+        'jiaotong',
+        'gouwu',
+        'shuiguo',
+        'lingshi',
+        'yule',
+        'tongxun',
+        'riyong',
+        'kuaidi',
+        'shucai',
+        'meirong',
+        'shuji',
+        'yundong',
+      ];
+      const remarkByCat = {
+        'canyin': ['午餐', '早餐', '晚餐', '咖啡'],
+        'jiaotong': ['地铁', '打车'],
+        'gouwu': ['超市'],
+        'shuiguo': ['水果'],
+        'lingshi': ['零食'],
+        'yule': ['电影'],
+        'tongxun': ['话费'],
+        'riyong': ['超市'],
+        'kuaidi': ['快递'],
+        'shucai': ['买菜'],
+        'meirong': ['理发'],
+        'shuji': ['书'],
+        'yundong': ['健身房'],
+      };
+      final rnd = math.Random(20260908);
+      final bookId = books.first.id;
+      final now = DateTime.now();
+
+      for (var d = 130; d >= 0; d--) {
+        final day = now.subtract(Duration(days: d));
+        // 每月 1 号工资,15 号可能有一笔理财
+        if (day.day == 1) {
+          _addDemo(
+            bookId,
+            TxnType.income,
+            'gongzi',
+            800000,
+            day,
+            9,
+            remark: '工资',
+          );
+        }
+        if (day.day == 15 && rnd.nextDouble() < 0.5) {
+          _addDemo(
+            bookId,
+            TxnType.income,
+            'licai',
+            (200 + rnd.nextInt(500)) * 100,
+            day,
+            18,
+            remark: '理财收益',
+          );
+        }
+        // 约七成日子有 1~3 笔日常支出
+        if (rnd.nextDouble() < 0.72) {
+          final n = 1 + rnd.nextInt(3);
+          for (var i = 0; i < n; i++) {
+            final cat = expensePool[rnd.nextInt(expensePool.length)];
+            final remarks = remarkByCat[cat]!;
+            final cents =
+                (5 + rnd.nextDouble() * rnd.nextDouble() * 480).round() * 100 +
+                rnd.nextInt(99);
+            _addDemo(
+              bookId,
+              TxnType.expense,
+              cat,
+              cents,
+              day,
+              7 + rnd.nextInt(14),
+              remark: rnd.nextDouble() < 0.6
+                  ? remarks[rnd.nextInt(remarks.length)]
+                  : '',
+            );
+          }
+        }
+      }
+    }
+    // 3. 内存标记 + 原子持久化(与数据同一次写入,不会再丢标记)
+    _demoSeeded = true;
+    _changed();
+  }
+
+  void _addDemo(
+    String bookId,
+    TxnType type,
+    String cat,
+    int cents,
+    DateTime day,
+    int hour, {
+    String remark = '',
+  }) {
+    _txns.add(
+      Txn(
+        id: _genId('t'),
+        bookId: bookId,
+        type: type,
+        categoryKey: cat,
+        amountCents: cents,
+        remark: remark,
+        date: DateTime(
+          day.year,
+          day.month,
+          day.day,
+          hour,
+          rndMinute(),
+        ).millisecondsSinceEpoch,
+      ),
+    );
+  }
+
+  static int _rndMinuteSeed = 7;
+  int rndMinute() => (_rndMinuteSeed = (_rndMinuteSeed * 13 + 17) % 60);
+
   void _changed() {
     notifyListeners();
     _persist();
@@ -299,6 +439,7 @@ class LedgerStore extends ChangeNotifier {
         jsonEncode({
           'version': 1,
           'currentBookId': _currentBookId,
+          'demoSeededV1': _demoSeeded,
           'books': books.map((b) => b.toJson()).toList(),
           'txns': _txns.map((t) => t.toJson()).toList(),
           'customCategories': _customCategories.map((c) => c.toJson()).toList(),

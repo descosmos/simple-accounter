@@ -7,9 +7,11 @@ import '../theme.dart';
 import '../utils.dart';
 import '../widgets/book_cover.dart';
 import '../widgets/hairline.dart';
+import 'book_edit_page.dart';
 
 /// 弹出账本切换面板(暖白电子纸底部弹层)。
-/// 点击账本立即切换并收起;底部提供「新建账本」入口。
+/// 点击账本立即切换并收起;底部提供「新建账本」入口
+/// (未传 onCreateBook 时默认打开新建账本页)。
 Future<void> showBookSwitcher(
   BuildContext context, {
   VoidCallback? onCreateBook,
@@ -21,7 +23,13 @@ Future<void> showBookSwitcher(
       return _BookSwitcherSheet(
         onCreateBook: () {
           Navigator.of(sheetContext).pop();
-          onCreateBook?.call();
+          if (onCreateBook != null) {
+            onCreateBook();
+          } else {
+            Navigator.of(context, rootNavigator: true).push(
+              CupertinoPageRoute<void>(builder: (_) => const BookEditPage()),
+            );
+          }
         },
       );
     },
