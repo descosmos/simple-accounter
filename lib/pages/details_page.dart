@@ -32,6 +32,38 @@ class _DetailsPageState extends State<DetailsPage> {
     });
   }
 
+  /// 滑动删除前的确认;返回 true 才真正删除。
+  Future<bool> _confirmDeleteTxn(Txn t) async {
+    final book = ledgerStore.currentBook;
+    final cat = ledgerStore.categoryOf(t.categoryKey);
+    final sign = t.type == TxnType.expense ? '-' : '+';
+    final what = t.remark.isEmpty ? cat.title : t.remark;
+    final amount = '$sign${book.currencySymbol}${fmtCents(t.amountCents)}';
+    var ok = false;
+    await showCupertinoDialog<void>(
+      context: context,
+      builder: (c) => CupertinoAlertDialog(
+        title: const Text('删除这条账单?'),
+        content: Text('$what $amount,删除后无法恢复。'),
+        actions: [
+          CupertinoDialogAction(
+            onPressed: () => Navigator.pop(c),
+            child: const Text('取消'),
+          ),
+          CupertinoDialogAction(
+            isDestructiveAction: true,
+            onPressed: () {
+              ok = true;
+              Navigator.pop(c);
+            },
+            child: const Text('删除'),
+          ),
+        ],
+      ),
+    );
+    return ok;
+  }
+
   @override
   Widget build(BuildContext context) {
     return CupertinoPageScaffold(
@@ -293,6 +325,7 @@ class _DetailsPageState extends State<DetailsPage> {
                     size: 20,
                   ),
                 ),
+                confirmDismiss: (_) => _confirmDeleteTxn(txns[i]),
                 onDismissed: (_) {
                   HapticFeedback.lightImpact();
                   ledgerStore.deleteTxn(txns[i].id);

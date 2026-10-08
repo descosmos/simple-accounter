@@ -33,6 +33,8 @@ class _RecordPageState extends State<RecordPage> {
     // 备注输入框获得焦点(系统键盘弹出)时隐藏自带键盘,避免布局溢出。
     // 用焦点而非 viewInsets 判断:部分机型 IME 弹出时 viewInsets 不变。
     _remarkFocus.addListener(() => setState(() {}));
+    // 备注内容变化时刷新推荐胶囊的选中态
+    _remarkCtrl.addListener(() => setState(() {}));
   }
 
   @override
@@ -361,7 +363,8 @@ class _RecordPageState extends State<RecordPage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
+                // ---- 历史备注推荐条(半透明悬浮,横滑,点按即填入) ----
+                _suggestionStrip(),
                 // ---- 底部输入区:默认数字键盘;备注聚焦(系统键盘弹出)时
                 // 换成紧凑的「金额 + 完成」栏,金额入口始终可见 ----
                 if (MediaQuery.of(context).viewInsets.bottom == 0 &&
@@ -390,6 +393,74 @@ class _RecordPageState extends State<RecordPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// 历史备注推荐:当前账本+当前类型,同分类的排前面,按最近使用去重。
+  List<String> _remarkSuggestions() {
+    final txns = ledgerStore.txnsInPeriod(
+      ledgerStore.currentBookId,
+      Period(DateTime(2000), DateTime(2100)),
+    );
+    final seen = <String>{};
+    final sameCat = <String>[];
+    final others = <String>[];
+    for (final t in txns) {
+      if (t.type != _type) continue;
+      final r = t.remark.trim();
+      if (r.isEmpty || !seen.add(r)) continue;
+      (t.categoryKey == _categoryKey ? sameCat : others).add(r);
+      if (sameCat.length + others.length >= 20) break;
+    }
+    return [...sameCat, ...others];
+  }
+
+  /// 备注推荐条:半透明悬浮在底部输入区上方,横滑浏览,点按即填入。
+  Widget _suggestionStrip() {
+    final suggestions = _remarkSuggestions();
+    if (suggestions.isEmpty) return const SizedBox(height: 6);
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: AppTheme.paper.withValues(alpha: 0.94),
+        border: const Border(top: BorderSide(color: AppTheme.line, width: 0.5)),
+      ),
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+        itemCount: suggestions.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          final r = suggestions[i];
+          final active = _remarkCtrl.text.trim() == r;
+          return GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              _remarkCtrl.text = r;
+              _remarkCtrl.selection = TextSelection.collapsed(offset: r.length);
+            },
+            child: Container(
+              alignment: Alignment.center,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: active ? AppTheme.ink : null,
+                border: Border.all(
+                  color: active ? AppTheme.ink : AppTheme.line,
+                ),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                r,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: active ? AppTheme.paper : AppTheme.inkSub,
+                ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
