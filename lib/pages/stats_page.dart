@@ -484,13 +484,13 @@ class _RangeChartState extends State<RangeChart> {
 
   @override
   Widget build(BuildContext context) {
-    // 用 P90 分位数做归一上限,避免单根巨柱(如工资)压扁其余柱子;
-    // 被截断的柱子顶部画白色斜切纹示意。
-    final values = <int>[
-      for (final p in widget.points) ...[p.expense, p.income],
-    ]..sort();
-    var maxV =
-        values[(values.length * 0.9).floor().clamp(0, values.length - 1)];
+    // 柱高与金额严格成正比:以范围内最大值为满高,不削峰,
+    // 避免稀疏数据下不同金额的柱子被截成同一高度。
+    var maxV = 0;
+    for (final p in widget.points) {
+      if (p.expense > maxV) maxV = p.expense;
+      if (p.income > maxV) maxV = p.income;
+    }
     if (maxV <= 0) maxV = 1;
     return LayoutBuilder(
       builder: (context, c) {
@@ -573,8 +573,6 @@ class _RangeChartState extends State<RangeChart> {
     final isToday = p.title.startsWith(
       '${DateTime.now().month}月${DateTime.now().day}日',
     );
-    final expClipped = p.expense > maxV;
-    final incClipped = p.income > maxV;
     return SizedBox(
       height: 148,
       child: Column(
@@ -586,22 +584,22 @@ class _RangeChartState extends State<RangeChart> {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                // 支出:实心(截断时柱体带白色斜切纹)
+                // 支出:实心(今天的柱子用深色)
                 Flexible(
-                  child: _maybeSlashed(
+                  child: Container(
                     height: expH,
-                    clipped: expClipped,
                     margin: const EdgeInsets.only(right: 1),
-                    fill: isToday ? AppTheme.ink : AppTheme.inkSub,
+                    color: isToday ? AppTheme.ink : AppTheme.inkSub,
                   ),
                 ),
                 // 收入:描边
                 Flexible(
-                  child: _maybeSlashed(
+                  child: Container(
                     height: incH,
-                    clipped: incClipped,
                     margin: const EdgeInsets.only(left: 1),
-                    border: Border.all(color: AppTheme.inkSub, width: 1),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppTheme.inkSub, width: 1),
+                    ),
                   ),
                 ),
               ],
@@ -611,58 +609,4 @@ class _RangeChartState extends State<RangeChart> {
       ),
     );
   }
-
-  /// 柱体;截断时在距顶部 4px 处叠加两条白色斜切纹(断轴符号)。
-  Widget _maybeSlashed({
-    required double height,
-    required bool clipped,
-    required EdgeInsets margin,
-    Color? fill,
-    Border? border,
-  }) {
-    final bar = Container(
-      height: height,
-      margin: margin,
-      color: fill,
-      decoration: border != null ? BoxDecoration(border: border) : null,
-    );
-    if (!clipped || height < 16) return bar;
-    return Stack(
-      children: [
-        bar,
-        Positioned(
-          top: 4,
-          left: margin.left,
-          right: margin.right,
-          height: 8,
-          child: CustomPaint(painter: _SlashPainter()),
-        ),
-      ],
-    );
-  }
-}
-
-/// 断轴斜切纹:两条白色斜线,画在被截断柱体的顶部。
-class _SlashPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppTheme.paper
-      ..strokeWidth = 2
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.butt;
-    canvas.drawLine(
-      Offset(-2, size.height - 1),
-      Offset(size.width + 2, -1),
-      paint,
-    );
-    canvas.drawLine(
-      Offset(-2, size.height + 2),
-      Offset(size.width + 2, 2),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

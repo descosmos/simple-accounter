@@ -46,7 +46,7 @@ class SettingsPage extends StatelessWidget {
               const Hairline(),
               _row('分类管理', onTap: () => _push(context, const CategoriesPage())),
               const Hairline(),
-              _row('关于', trailing: '简账 1.0.0'),
+              _row('关于', trailing: '简账 1.0.1'),
               const Hairline(),
             ],
           ),
