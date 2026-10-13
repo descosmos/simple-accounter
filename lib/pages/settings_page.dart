@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
 
+import '../app_info.dart';
 import '../store.dart';
 import '../theme.dart';
 import '../widgets/hairline.dart';
@@ -46,7 +47,10 @@ class SettingsPage extends StatelessWidget {
               const Hairline(),
               _row('分类管理', onTap: () => _push(context, const CategoriesPage())),
               const Hairline(),
-              _row('关于', trailing: '简账 1.0.1'),
+              _row(
+                '关于',
+                trailing: appVersion.isEmpty ? '简账' : '简账 $appVersion',
+              ),
               const Hairline(),
             ],
           ),

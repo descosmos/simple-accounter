@@ -7,6 +7,7 @@ import 'pages/details_page.dart';
 import 'pages/record_page.dart';
 import 'pages/settings_page.dart';
 import 'pages/stats_page.dart';
+import 'app_info.dart';
 import 'store.dart';
 import 'theme.dart';
 
@@ -26,6 +27,8 @@ class _SimpleLedgerAppState extends State<SimpleLedgerApp> {
   late final Future<void> _loading = _init();
 
   Future<void> _init() async {
+    // 版本号等应用信息(从打包的 pubspec.yaml 解析)
+    await loadAppInfo();
     await ledgerStore.load();
     // 演示数据(虚构,仅注入一次)
     await ledgerStore.seedDemoDataIfNeeded();
